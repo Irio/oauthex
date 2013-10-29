@@ -1,67 +1,64 @@
 Application.Behaviour.start(:oauthex)
 
-defmodule TwitterCli do
-
-  def read_tweets() do
-    receive do
-      {:http, {_ref, :stream, tweet}} -> IO.inspect tweet
-    end
-    read_tweets
-  end
-
-  def command(_url, [consumer_key, consumer_secret, token, secret, "track", word]) do
-    consumer = Oauthex.Consumer.new(
-      key:    String.to_char_list!(consumer_key),
-      secret: String.to_char_list!(consumer_secret)
-    )
-    reqinfo = Oauthex.ReqInfo.new(
-      token:  String.to_char_list!(token),
-      secret: String.to_char_list!(secret)
-    )
-    Oauthex.post \
-      'https://stream.twitter.com/1.1/statuses/filter.json',
-      [{'track', String.to_char_list!(word)}], consumer, reqinfo
-    read_tweets
-  end
-
+defmodule TwitterOAuthex do
   def command(url, [consumer_key, consumer_secret]) do
     consumer = Oauthex.Consumer.new(
       key:    String.to_char_list!(consumer_key),
       secret: String.to_char_list!(consumer_secret)
     )
-    reqinfo = Oauthex.request_token '#{url}/request_token', [], consumer
+    request_info = Oauthex.request_token '#{url}/request_token', [], consumer
     IO.puts '''
-
-You secret is: #{reqinfo.secret}
+You secret is: #{request_info.secret}
 
 Your auth url is:
 
-  #{url}/authenticate?oauth_token=#{reqinfo.token}
-  
+  #{url}/authenticate?oauth_token=#{request_info.token}
+
 Please visit it with your browser. Then run
 
-$ twitter.mxs #{consumer_key} #{consumer_secret} #{reqinfo.token} #{reqinfo.secret}
-
-  
-  '''
+$ twitter.mxs #{consumer_key} #{consumer_secret} #{request_info.token} #{request_info.secret}
+'''
   end
 
-  def command(url, [consumer_key, consumer_secret, token, secret]) do
+  def command(url, [consumer_key, consumer_secret, request_token, request_secret]) do
     consumer = Oauthex.Consumer.new(
       key:    String.to_char_list!(consumer_key),
       secret: String.to_char_list!(consumer_secret)
     )
-    reqinfo = Oauthex.ReqInfo.new(
-      token:  String.to_char_list!(token),
-      secret: String.to_char_list!(secret)
+    request_info = Oauthex.RequestInfo.new(
+      token:  String.to_char_list!(request_token),
+      secret: String.to_char_list!(request_secret)
     )
-    accinfo = Oauthex.access_token '#{url}/access_token', [], consumer, reqinfo
+    account_info = Oauthex.access_token '#{url}/access_token', [], consumer, request_info
     IO.puts '''
-Your access token is: #{accinfo.token}
+Your access token is: #{account_info.token}
 
-You access secret is: #{accinfo.secret}
+You access secret is: #{account_info.secret}
 '''
+  end
+
+  def command(_url, [consumer_key, consumer_secret, access_token, access_secret, "track", word]) do
+    consumer = Oauthex.Consumer.new(
+      key:    String.to_char_list!(consumer_key),
+      secret: String.to_char_list!(consumer_secret)
+    )
+    request_info = Oauthex.RequestInfo.new(
+      token:  String.to_char_list!(access_token),
+      secret: String.to_char_list!(access_secret)
+    )
+    Oauthex.post 'https://stream.twitter.com/1.1/statuses/filter.json',
+                 [{ 'track', String.to_char_list!(word) }],
+                 consumer,
+                 request_info
+    read_tweets
+  end
+
+  def read_tweets() do
+    receive do
+      { :http, { _, :stream, tweet } } -> IO.inspect tweet
+    end
+    read_tweets
   end
 end
 
-TwitterCli.command 'https://api.twitter.com/oauth', System.argv()
+TwitterOAuthex.command 'https://api.twitter.com/oauth', System.argv()
