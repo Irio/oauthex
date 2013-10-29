@@ -1,18 +1,20 @@
 Application.Behaviour.start(:oauthex)
 
 defmodule TwitterOAuthex do
-  def command(url, [consumer_key, consumer_secret]) do
+  @base_url 'https://api.twitter.com/oauth'
+
+  def command([consumer_key, consumer_secret]) do
     consumer = Oauthex.Consumer.new(
       key:    String.to_char_list!(consumer_key),
       secret: String.to_char_list!(consumer_secret)
     )
-    request_info = Oauthex.request_token '#{url}/request_token', [], consumer
+    request_info = Oauthex.request_token '#{@base_url}/request_token', [], consumer
     IO.puts '''
 You secret is: #{request_info.secret}
 
 Your auth url is:
 
-  #{url}/authenticate?oauth_token=#{request_info.token}
+  #{@base_url}/authenticate?oauth_token=#{request_info.token}
 
 Please visit it with your browser. Then run
 
@@ -20,7 +22,7 @@ $ twitter.mxs #{consumer_key} #{consumer_secret} #{request_info.token} #{request
 '''
   end
 
-  def command(url, [consumer_key, consumer_secret, request_token, request_secret]) do
+  def command([consumer_key, consumer_secret, request_token, request_secret, verifier]) do
     consumer = Oauthex.Consumer.new(
       key:    String.to_char_list!(consumer_key),
       secret: String.to_char_list!(consumer_secret)
@@ -29,15 +31,20 @@ $ twitter.mxs #{consumer_key} #{consumer_secret} #{request_info.token} #{request
       token:  String.to_char_list!(request_token),
       secret: String.to_char_list!(request_secret)
     )
-    account_info = Oauthex.access_token '#{url}/access_token', [], consumer, request_info
+    account_info = Oauthex.access_token '#{@base_url}/access_token',
+                                        [{ 'oauth_verifier', String.to_char_list!(verifier) }],
+                                        consumer,
+                                        request_info
     IO.puts '''
 Your access token is: #{account_info.token}
 
 You access secret is: #{account_info.secret}
+
+$ elixir --erl '-pa ebin deps/*/ebin' bin/twitter.mxs #{consumer_key} #{consumer_secret} #{request_info.token} #{request_info.secret}
 '''
   end
 
-  def command(_url, [consumer_key, consumer_secret, access_token, access_secret, "track", word]) do
+  def command([consumer_key, consumer_secret, access_token, access_secret, "track", word]) do
     consumer = Oauthex.Consumer.new(
       key:    String.to_char_list!(consumer_key),
       secret: String.to_char_list!(consumer_secret)
@@ -61,4 +68,4 @@ You access secret is: #{account_info.secret}
   end
 end
 
-TwitterOAuthex.command 'https://api.twitter.com/oauth', System.argv()
+TwitterOAuthex.command System.argv()
