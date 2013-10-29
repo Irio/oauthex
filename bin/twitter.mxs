@@ -58,7 +58,7 @@ Your access secret is: #{account_info.secret}
     read_tweets
   end
 
-  def read_tweets() do
+  defp read_tweets() do
     receive do
       { :http, { _, :stream, tweet } } -> IO.inspect tweet
     end
