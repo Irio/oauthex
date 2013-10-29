@@ -16,9 +16,9 @@ Your auth url is:
 
   #{@base_url}/authenticate?oauth_token=#{request_info.token}
 
-Please visit it with your browser. Then run
+Please visit and authorize it via browser. Then run:
 
-$ twitter.mxs #{consumer_key} #{consumer_secret} #{request_info.token} #{request_info.secret}
+$ elixir --erl '-pa ebin deps/*/ebin' bin/twitter.mxs #{consumer_key} #{consumer_secret} #{request_info.token} #{request_info.secret} <PIN from Twitter>
 '''
   end
 
