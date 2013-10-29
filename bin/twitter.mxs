@@ -10,7 +10,7 @@ defmodule TwitterOAuthex do
     )
     request_info = Oauthex.request_token '#{@base_url}/request_token', [], consumer
     IO.puts '''
-You secret is: #{request_info.secret}
+Your secret is: #{request_info.secret}
 
 Your auth url is:
 
@@ -38,9 +38,7 @@ $ elixir --erl '-pa ebin deps/*/ebin' bin/twitter.mxs #{consumer_key} #{consumer
     IO.puts '''
 Your access token is: #{account_info.token}
 
-You access secret is: #{account_info.secret}
-
-$ elixir --erl '-pa ebin deps/*/ebin' bin/twitter.mxs #{consumer_key} #{consumer_secret} #{request_info.token} #{request_info.secret}
+Your access secret is: #{account_info.secret}
 '''
   end
 
